@@ -2,36 +2,57 @@
 #include <cstdlib>
 #include <string>
 #include <map>
+#include <vector>
 class BigInt
 {
 private:
-    int m_iUp, m_iDown;
+    std::string m_strValue;
 public:
-    BigInt():m_iUp(0), m_iDown(0) {}
-    BigInt(int down):m_iUp(0), m_iDown(down) {}
-    BigInt(int up, int down):m_iUp(up), m_iDown(down) {}
-    BigInt &operator+(const BigInt &rhs)
+    BigInt():m_strValue("0") {}
+    BigInt(int n):m_strValue()
     {
-        int iMax = 100000000;
-        m_iUp += rhs.m_iUp;
-        m_iDown += rhs.m_iDown;
-        if (m_iDown >= iMax)
+        char buf[64]; sprintf(buf, "%d", n);
+        m_strValue = buf;
+    }
+    BigInt operator+(const BigInt &rhs)
+    {
+        std::vector<int> resVec;
+        size_t nMin, nMax; nMin = nMax = rhs.m_strValue.length();
+        if(nMin > m_strValue.length()) nMin = m_strValue.length();
+        if(nMax < m_strValue.length()) nMax = m_strValue.length();
+        int iInc = 0;
+        for(int i=0;i<(int)nMax;i++)
         {
-            m_iUp += m_iDown / iMax;
-            m_iDown %= iMax;
-            if (m_iUp < 0)
-                fprintf(stderr, "m_iUp less than zero!!\n");
+            char cL=0, cR=0;
+            if(i<(int)m_strValue.length())
+            {
+                int iL = m_strValue.length() - i - 1;
+                cL = m_strValue[(size_t)iL] - '0';
+            }
+            if(i<(int)rhs.m_strValue.length())
+            {
+                int iR = rhs.m_strValue.length() - i - 1;
+                cR = rhs.m_strValue[(size_t)iR] - '0';
+            }
+            int iSum = cL + cR + iInc;
+            if(iSum > 0)
+            {
+                iInc = iSum / 10;
+                iSum %= 10;
+            }
+            else iInc = 0;
+            resVec.push_back(iSum);
         }
-        return *this;
+        if(iInc>0) resVec.push_back(iInc);
+        std::string strRet = "";
+        for(int i=resVec.size()-1;i>=0;i--)
+        {
+            strRet += (char)resVec[i] + '0';
+        }
+        BigInt bigInt; bigInt.m_strValue = strRet;
+        return bigInt;
     }
-    int up() const
-    {
-        return m_iUp;
-    }
-    int down() const
-    {
-        return m_iDown;
-    }
+    std::string &getValue() { return m_strValue; }
 };
 std::map<int, BigInt> bankMap;
 BigInt f(int n)
@@ -51,16 +72,7 @@ int main(int argc, char *argv[])
     else
     {
         BigInt ans = f(atoi(argv[1]));
-        char buf[64];
-        std::string strAns;
-        if (ans.up() > 0)
-        {
-            sprintf(buf, "%d", ans.up());
-            strAns = buf;
-        }
-        sprintf(buf, "%d", ans.down());
-        strAns += buf;
-        printf("Answer is [%s]\n", strAns.c_str());
+        printf("Answer is [%s]\n", ans.getValue().c_str());
     }
     return 0;
 }
